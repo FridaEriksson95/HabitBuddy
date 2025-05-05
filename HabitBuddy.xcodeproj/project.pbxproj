@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5D5223442DC045930035AD43 /* Habit+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5223432DC045930035AD43 /* Habit+CoreDataProperties.swift */; };
+		5D5223452DC045930035AD43 /* Habit+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5223422DC045930035AD43 /* Habit+CoreDataClass.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5D5223182DC0338E0035AD43 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +32,8 @@
 		5D5223052DC0338C0035AD43 /* HabitBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HabitBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D5223172DC0338E0035AD43 /* HabitBuddyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HabitBuddyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D5223212DC0338E0035AD43 /* HabitBuddyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HabitBuddyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D5223422DC045930035AD43 /* Habit+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Habit+CoreDataClass.swift"; sourceTree = "<group>"; };
+		5D5223432DC045930035AD43 /* Habit+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Habit+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +82,8 @@
 		5D5222FC2DC0338C0035AD43 = {
 			isa = PBXGroup;
 			children = (
+				5D5223422DC045930035AD43 /* Habit+CoreDataClass.swift */,
+				5D5223432DC045930035AD43 /* Habit+CoreDataProperties.swift */,
 				5D5223072DC0338C0035AD43 /* HabitBuddy */,
 				5D52231A2DC0338E0035AD43 /* HabitBuddyTests */,
 				5D5223242DC0338E0035AD43 /* HabitBuddyUITests */,
@@ -236,6 +245,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D5223442DC045930035AD43 /* Habit+CoreDataProperties.swift in Sources */,
+				5D5223452DC045930035AD43 /* Habit+CoreDataClass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
