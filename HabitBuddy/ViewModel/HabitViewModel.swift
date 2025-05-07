@@ -15,6 +15,7 @@ class HabitViewModel: ObservableObject {
     @Published var streak: Int
     @Published var title: String
     @Published var symbolName: String
+    @Published var didUpdateNotes = false
     
     private let context: NSManagedObjectContext
     
@@ -114,4 +115,46 @@ func completedDatesInMonth(year: Int, month: Int) -> [Date] {
         
         }
     }
+    
+    private var notes: [Date: String] {
+        get {
+            if let notesData = habit.notes, let notesDict = try? JSONSerialization.jsonObject(with: notesData, options: []) as? [String: String] {
+                return Dictionary(uniqueKeysWithValues: notesDict.map { (Calendar.current.startOfDay(for: DateFormatter.iso8601.date(from: $0) ?? Date()), $1) })
+            }
+            return [:]
+        }
+        set {
+            let notesDict = Dictionary(uniqueKeysWithValues: newValue.map { (DateFormatter.iso8601.string(from: Calendar.current.startOfDay(for: $0)), $1) })
+            do {
+                let notesData = try JSONSerialization.data(withJSONObject: notesDict, options: [])
+                habit.notes = notesData
+                save()
+                didUpdateNotes.toggle()
+            } catch {
+                print("Failed to encode notes: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func getNote(for date: Date) -> String? {
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        return notes[normalizedDate]
+    }
+    
+    func addNote(for date: Date, note: String) {
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        var updatedNotes = notes
+        updatedNotes[normalizedDate] = note.isEmpty ? nil : note
+        notes = updatedNotes
+    }
+}
+
+extension DateFormatter {
+    static let iso8601: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.calendar = Calendar.current
+        formatter.timeZone = TimeZone.current
+        return formatter
+    }()
 }

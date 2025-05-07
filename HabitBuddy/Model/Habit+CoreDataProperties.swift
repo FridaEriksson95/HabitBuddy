@@ -23,6 +23,7 @@ extension HabitEntity {
     @NSManaged public var symbolName: String?
     @NSManaged public var createdDate: Date?
     @NSManaged public var completedDates: [Date]?
+    @NSManaged public var notes: Data?
 }
 
 extension HabitEntity : Identifiable {

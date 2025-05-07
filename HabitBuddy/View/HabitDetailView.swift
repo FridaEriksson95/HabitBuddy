@@ -126,12 +126,10 @@ struct HabitDetailView: View {
                             .padding(.horizontal)
                             
                             CalendarView(
-                                year: selectedYear, month: selectedMonth, completedDates: viewModel.completedDatesInMonth(year: selectedYear, month: selectedMonth))
+                                year: selectedYear, month: selectedMonth, completedDates: viewModel.completedDatesInMonth(year: selectedYear, month: selectedMonth), viewModel: viewModel)
                         }
                         .padding(.vertical, 30)
                         
-                        
-//                        Spacer(minLength: 10)
                             .vSpacing(.center)
                         Divider()
                         
