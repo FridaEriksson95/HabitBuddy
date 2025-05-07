@@ -25,6 +25,10 @@ class HabitViewModel: ObservableObject {
         self.streak = Int(habit.streak)
         self.title = habit.title ?? "din habit"
         self.symbolName = habit.symbolName ?? "questionmark.circle"
+        if habit.createdDate == nil {
+            habit.createdDate = Calendar.current.startOfDay(for: Date())
+            save()
+        }
         checkTodayStatus()
     }
     
@@ -44,24 +48,25 @@ class HabitViewModel: ObservableObject {
         guard !isHabitCompleted(on: date) else { return }
         
         var completedDates = habit.completedDates ?? []
-        completedDates.append(date)
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        completedDates.append(normalizedDate)
         habit.completedDates = completedDates
         
-        if Calendar.current.isDateInToday(date) {
+        if Calendar.current.isDateInToday(normalizedDate) {
             isCompletedToday = true
             habit.isCompletedToday = true
-            habit.lastCompletedDate = date
+            habit.lastCompletedDate = normalizedDate
+            streak += 1
+            habit.streak = Int16(streak)
         }
-        
-        streak += 1
-        habit.streak = Int16(streak)
         
         save()
     }
     
     func isHabitCompleted(on date: Date) -> Bool {
         guard let completedDates = habit.completedDates else { return false }
-        return completedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        return completedDates.contains { Calendar.current.isDate($0, inSameDayAs: normalizedDate) }
     }
     
     func updateHabit(newTitle: String, newSymbol: String) {
@@ -81,6 +86,26 @@ class HabitViewModel: ObservableObject {
             }
         }
     }
+    
+//    func completedDatesInMonth(year: Int, month: Int) -> [Date] {
+//        let calendar = Calendar.current
+//        guard let completedDates = habit.completedDates else { return [] }
+//        
+//        var components = DateComponents()
+//        components.year = year
+//        components.month = month
+//        components.day = 1
+//        
+//        guard let firstDayOfMonth = calendar.date(from: components),
+//              let range = calendar.range(of: .day, in: .month, for: firstDayOfMonth),
+//              let lastDatOfMonth = calendar.date(byAdding: .day, value: range.count - 1, to: firstDayOfMonth) else { return [] }
+//        
+//        return completedDates.filter { date in
+//            calendar.isDate(date, equalTo: firstDayOfMonth, toGranularity: .month)
+//            
+//        }
+//    }
+//}
     
     private func save() {
         do {

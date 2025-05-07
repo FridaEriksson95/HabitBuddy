@@ -51,7 +51,12 @@ struct HabitEntityView: View {
                             HabitItemView(
                                         habit : habit,
                                           isCompleted: viewModel.isHabitCompleted(habit, on: viewModel.currentDate),
-                                        isPastDate: viewModel.currentDate < Date(), currentDate: Date()
+                                        isPastDate: { let createdDate = habit.createdDate ?? Calendar.current.startOfDay(for: Date())
+                                            let currentDate = Calendar.current.startOfDay(for: viewModel.currentDate)
+                                            let comparison = Calendar.current.compare(createdDate, to: currentDate, toGranularity: .day)
+                                            let result = comparison == .orderedAscending
+                                        return result}(),
+                                        entityViewModel: viewModel
                             )
                                 .listRowBackground(Color.BG)
                                 .buttonStyle(.plain)

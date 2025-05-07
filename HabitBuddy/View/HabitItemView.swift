@@ -11,16 +11,18 @@ import CoreData
 struct HabitItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel: HabitViewModel
+    @ObservedObject var entityViewModel: HabitEntityViewModel
     @State private var navigateToDetail = false
-    let isCompleted: Bool
+    @State private var isCompleted: Bool
     let isPastDate: Bool
-    let currentDate: Date
+    private let habit: HabitEntity
     
-    init(habit: HabitEntity, isCompleted: Bool, isPastDate: Bool, currentDate: Date, context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
+    init(habit: HabitEntity, isCompleted: Bool, isPastDate: Bool, entityViewModel: HabitEntityViewModel, context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
         _viewModel = StateObject(wrappedValue: HabitViewModel(habit: habit, context: context))
-        self.isCompleted = isCompleted
+        self.entityViewModel = entityViewModel
+        self.habit = habit
+        self._isCompleted = State(initialValue: entityViewModel.isHabitCompleted(habit, on: entityViewModel.currentDate))
         self.isPastDate = isPastDate
-        self.currentDate = currentDate
     }
     
     var body: some View {
@@ -48,7 +50,8 @@ struct HabitItemView: View {
             Spacer()
             
             Button(action: {
-                viewModel.markAsCompleted(on: currentDate)
+                viewModel.markAsCompleted(on: entityViewModel.currentDate)
+                isCompleted = viewModel.isHabitCompleted(on: entityViewModel.currentDate)
             }) {
                 Label("Klar", systemImage: "checkmark.circle")
                     .foregroundColor(isCompleted ? .bluegreen : determineButtonColor())
@@ -60,7 +63,7 @@ struct HabitItemView: View {
                         .stroke(isCompleted ? .bluegreen : determineButtonColor(), lineWidth: 2))
             }
             .buttonStyle(.plain)
-            .disabled(isCompleted || !isToday() || currentDate > Date())
+            .disabled(isCompleted || !isToday() || entityViewModel.currentDate > Date())
             .padding(.trailing)
             .contentShape(Rectangle())
         }
@@ -82,16 +85,24 @@ struct HabitItemView: View {
         .navigationDestination(isPresented: $navigateToDetail) {
             HabitDetailView(viewModel: viewModel)
         }
+        .onChange(of: entityViewModel.currentDate) {
+            isCompleted = entityViewModel.isHabitCompleted(habit, on: entityViewModel.currentDate)
+        }
+                .onChange(of: viewModel.isCompletedToday) {
+                    if Calendar.current.isDateInToday(entityViewModel.currentDate) {
+                        isCompleted = viewModel.isCompletedToday
+                    }
+                }
     }
     
     private func isToday() -> Bool {
-        Calendar.current.isDateInToday(currentDate)
+        Calendar.current.isDateInToday(entityViewModel.currentDate)
     }
     
     private func determineButtonColor() -> Color {
         if isPastDate && !isCompleted {
             return .gray
-        } else if !isToday() || currentDate > Date() {
+        } else if entityViewModel.currentDate > Date() || !isToday() {
             return .gray
         } else {
             return .red
@@ -105,9 +116,10 @@ struct HabitItemView: View {
     habit.title = "Läsa bok"
     habit.streak = 10
     habit.symbolName = "book.fill"
+    let entityViewModel = HabitEntityViewModel(context: context)
     
     return NavigationStack {
-        HabitItemView(habit: habit, isCompleted: true, isPastDate: false, currentDate: Date(), context: context)
+        HabitItemView(habit: habit, isCompleted: true, isPastDate: false, entityViewModel: entityViewModel, context: context)
             .environment(\.managedObjectContext, context)
     }
 }
