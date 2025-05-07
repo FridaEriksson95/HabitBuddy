@@ -87,31 +87,31 @@ class HabitViewModel: ObservableObject {
         }
     }
     
-//    func completedDatesInMonth(year: Int, month: Int) -> [Date] {
-//        let calendar = Calendar.current
-//        guard let completedDates = habit.completedDates else { return [] }
-//        
-//        var components = DateComponents()
-//        components.year = year
-//        components.month = month
-//        components.day = 1
-//        
-//        guard let firstDayOfMonth = calendar.date(from: components),
-//              let range = calendar.range(of: .day, in: .month, for: firstDayOfMonth),
-//              let lastDatOfMonth = calendar.date(byAdding: .day, value: range.count - 1, to: firstDayOfMonth) else { return [] }
-//        
-//        return completedDates.filter { date in
-//            calendar.isDate(date, equalTo: firstDayOfMonth, toGranularity: .month)
-//            
-//        }
-//    }
-//}
-    
     private func save() {
         do {
             try context.save()
         } catch {
             print("Fel vid sparning: \(error.localizedDescription)")
+        }
+    }
+
+
+func completedDatesInMonth(year: Int, month: Int) -> [Date] {
+    let calendar = Calendar.current
+    guard let completedDates = habit.completedDates else { return [] }
+    
+    var components = DateComponents()
+    components.year = year
+    components.month = month
+    components.day = 1
+    
+    guard let firstDayOfMonth = calendar.date(from: components),
+          let range = calendar.range(of: .day, in: .month, for: firstDayOfMonth),
+          let lastDayOfMonth = calendar.date(byAdding: .day, value: range.count - 1, to: firstDayOfMonth) else { return [] }
+    
+    return completedDates.filter { date in
+        calendar.isDate(date, equalTo: firstDayOfMonth, toGranularity: .month)
+        
         }
     }
 }
