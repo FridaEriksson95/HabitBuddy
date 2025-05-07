@@ -21,6 +21,8 @@ extension HabitEntity {
     @NSManaged public var title: String?
     @NSManaged public var streak: Int16
     @NSManaged public var symbolName: String?
+    @NSManaged public var createdDate: Date?
+    @NSManaged public var completedDates: [Date]?
 }
 
 extension HabitEntity : Identifiable {

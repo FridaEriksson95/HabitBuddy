@@ -19,25 +19,26 @@ extension Date {
         return Calendar.current.isDateInToday(self)
     }
     
-    var isSameHour: Bool {
-        return Calendar.current.compare(self, to: .init(), toGranularity: .hour) == .orderedSame
-    }
+//    var isSameHour: Bool {
+//        return Calendar.current.compare(self, to: .init(), toGranularity: .hour) == .orderedSame
+//    }
+//    
+//    var isPast: Bool {
+//        return Calendar.current.compare(self, to: .init(), toGranularity: .hour) == .orderedAscending
+//    }
     
-    var isPast: Bool {
-        return Calendar.current.compare(self, to: .init(), toGranularity: .hour) == .orderedAscending
-    }
-    
-    func fetchWeek(_ date: Date = .init()) -> [WeekDay] {
+    func fetchWeek() -> [WeekDay] {
         let calendar = Calendar.current
-        let startOfDate = calendar.startOfDay(for: date)
+        let startOfDate = calendar.startOfDay(for: self)
+        
+        let weekInterval = calendar.dateInterval(of: .weekOfMonth, for: startOfDate)
+        guard let startOfWeek = weekInterval?.start else { return [] }
         
         var week: [WeekDay] = []
-        let weekForDate = calendar.dateInterval(of: .weekOfMonth, for: startOfDate)
-        guard let startOfWeek = weekForDate?.start else { return [] }
         
-        (0..<7).forEach { index in
+        for index in (0..<7) {
         if let weekDay = calendar.date(byAdding: .day, value: index, to: startOfWeek) {
-            week.append(.init(date: weekDay))
+            week.append(.init(date: calendar.startOfDay(for: weekDay)))
                 
             }
         }
@@ -46,18 +47,14 @@ extension Date {
     
     func createNextWeek() -> [WeekDay] {
         let calendar = Calendar.current
-        let startOfLastDate = calendar.startOfDay(for: self)
-        guard let nextDate = calendar.date(byAdding: .day, value: 1, to: startOfLastDate) else { return [] }
-        
-        return fetchWeek(nextDate)
+        guard let nextWeekStart = calendar.date(byAdding: .weekOfYear, value: 1, to: self) else { return [] }
+        return nextWeekStart.fetchWeek()
     }
     
     func createPreviousWeek() -> [WeekDay] {
         let calendar = Calendar.current
-        let startOfFirstDate = calendar.startOfDay(for: self)
-        guard let previousDate = calendar.date(byAdding: .day, value: -1, to: startOfFirstDate) else { return [] }
-        
-        return fetchWeek(previousDate)
+        guard let previousWeekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: self) else { return [] }
+        return previousWeekStart.fetchWeek()
     }
     
     struct WeekDay: Identifiable {

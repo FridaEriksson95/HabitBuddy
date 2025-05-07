@@ -6,14 +6,11 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct HabitEntityView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
-    @State private var currentDate: Date = .init()
-    @State private var weekSlider: [[Date.WeekDay]] = HabitEntityView.generateInitialWeeks()
-    @State private var currentWeekIndex: Int = 1
-    @State private var showingNewHabitSheet = false
+    @StateObject private var viewModel: HabitEntityViewModel
     
     
     @FetchRequest(
@@ -21,20 +18,25 @@ struct HabitEntityView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \HabitEntity.lastCompletedDate, ascending: true)],
         animation: .default)
     private var habits: FetchedResults<HabitEntity>
-
+    
+    init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
+        _viewModel = StateObject(wrappedValue: HabitEntityViewModel(context: context))
+    }
     
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading) {
                 HeaderView()
                 
-                if habits.isEmpty {
-                        Spacer()
+                let filteredHabits = viewModel.filterHabits(for: viewModel.currentDate, habits: habits)
+                
+                if filteredHabits.isEmpty {
+                    Spacer()
                     VStack(alignment: .center, spacing: 16) {
-                        Text("Inga vanor än")
+                        Text("Inga habits än")
                             .font(.headline)
                             .foregroundColor(.gray)
-                            
+                        
                         Image(.logo)
                             .resizable()
                             .frame(width: 200, height: 200)
@@ -42,33 +44,30 @@ struct HabitEntityView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .multilineTextAlignment(.center)
-                        Spacer()
-                    } else {
-                        List{
-                            ForEach(habits) { habit in
-                                HabitItemView(habit : habit)
-                                    .listRowBackground(Color.BG)
-                                    .buttonStyle(.plain)
-                            }
-                            .onDelete(perform: deleteHabit)
+                    Spacer()
+                } else {
+                    List{
+                        ForEach(viewModel.filterHabits(for: viewModel.currentDate, habits: habits)) { habit in
+                            HabitItemView(
+                                        habit : habit,
+                                          isCompleted: viewModel.isHabitCompleted(habit, on: viewModel.currentDate),
+                                        isPastDate: viewModel.currentDate < Date(), currentDate: Date()
+                            )
+                                .listRowBackground(Color.BG)
+                                .buttonStyle(.plain)
                         }
-                        .listStyle(.plain)
-                        .background(.BG)
+                        .onDelete { offsets in
+                            viewModel.deleteHabit(offsets: offsets, habits: habits)
+                        }
                     }
-                }
-                .sheet(isPresented: $showingNewHabitSheet){
-                    NewHabitView()
-                        .environment(\.managedObjectContext, viewContext)
+                    .listStyle(.plain)
+                    .background(.BG)
                 }
             }
-        }
-    
- 
-    private func deleteHabit(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { habits[$0] }.forEach(viewContext.delete)
-            
-            try? viewContext.save()
+            .sheet(isPresented: $viewModel.showingNewHabitSheet){
+                NewHabitView()
+                    .environment(\.managedObjectContext, viewContext)
+            }
         }
     }
     
@@ -80,15 +79,15 @@ struct HabitEntityView: View {
                     .resizable()
                     .frame(width: 60, height: 60)
                     .clipShape(.circle)
-                Text(currentDate.format("MMMM"))
+                Text(viewModel.currentDate.format("MMMM"))
                     .foregroundStyle(.bluegreen)
                     .padding(.trailing, 5)
                 
-                Text(currentDate.format("YYYY"))
+                Text(viewModel.currentDate.format("YYYY"))
                     .foregroundStyle(.gray)
                 
                 Button(action: {
-                    showingNewHabitSheet = true
+                    viewModel.showingNewHabitSheet = true
                 }) {
                     Image(systemName: "plus")
                         .fontWeight(.semibold)
@@ -98,76 +97,82 @@ struct HabitEntityView: View {
                 }
                 .hSpacing(.trailing)
                 .padding(.horizontal, 20)
-               
+                
             }
             .font(.title.bold())
             .padding(.leading, 35)
             
-            if weekSlider.indices.contains(currentWeekIndex) {
-                WeekView(weekSlider[currentWeekIndex])
+            if viewModel.weekSlider.indices.contains(viewModel.currentWeekIndex) {
+                WeekView(viewModel.weekSlider[viewModel.currentWeekIndex])
             }
         }
     }
-  
-
     
     @ViewBuilder
     func WeekView(_ week: [Date.WeekDay]) -> some View {
-        HStack(spacing: 10) {
-            ForEach(week) { day in
-                VStack(spacing: 6) {
-                    Text(day.date.format("E"))
-                        .font(.caption)
-                        .foregroundStyle(.gray)
-                    
-                    Text(day.date.format("dd"))
-                        .font(.headline)
-                        .foregroundStyle(isSameDate(day.date, currentDate) ? .white : .gray)
-                        .frame(width: 35, height: 35)
-                        .background(
+        VStack{
+            HStack {
+                Button(action: {
+                    withAnimation{
+                        viewModel.navigateToPreviousWeek()
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(viewModel.canNavigateBack ? .bluegreen : .gray)
+                        .padding(.horizontal)
+                }
+                .disabled(!viewModel.canNavigateBack)
+                
+                Spacer()
+                
+                ForEach(week) { day in
+                    VStack(spacing: 6) {
+                        Text(day.date.format("E"))
+                            .font(.caption)
+                            .foregroundStyle(.gray)
+                        
+                        Text(day.date.format("dd"))
+                            .font(.headline)
+                            .foregroundStyle(viewModel.isSameDate(day.date, viewModel.currentDate) ? .white : .gray)
+                            .frame(width: 35, height: 35)
+                            .background(
                                 Circle()
-                                    .fill(isSameDate(day.date, currentDate) ? Color.bluegreen : Color.clear)
-                           )
-                        .overlay(
+                                    .fill(viewModel.isSameDate(day.date, viewModel.currentDate) ? Color.bluegreen : Color.clear)
+                            )
+                            .overlay(
                                 Circle()
                                     .fill(Color.cyan)
                                     .frame(width: 5, height: 5)
                                     .offset(y: 12)
-                                    .opacity(day.date.isToday && !isSameDate(day.date, currentDate) ? 1 : 0)
+                                    .opacity(day.date.isToday && !viewModel.isSameDate(day.date, viewModel.currentDate) ? 1 : 0)
                             )
+                    }
+                    .onTapGesture {
+                        withAnimation {
+                            viewModel.updateCurrentDate(to: day.date)
                         }
-                .onTapGesture {
-                    currentDate = day.date
+                    }
                 }
+                
+                Spacer()
+                
+                Button(action: {
+                    withAnimation {
+                        viewModel.navigateToNextWeek()
+                    }
+                }) {
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(viewModel.canNavigateForward ? .bluegreen : .gray)
+                        .padding(.horizontal)
+                }
+                .disabled(!viewModel.canNavigateForward)
             }
+            .padding(.vertical, 10)
+            .hSpacing(.center)
         }
-        .padding(.vertical, 10)
-        .hSpacing(.top)
-    }
-    
-
-
-    static func generateInitialWeeks() -> [[Date.WeekDay]] {
-        var weeks : [[Date.WeekDay]] = []
-        let currentWeek = Date().fetchWeek()
-        
-        if let first = currentWeek.first?.date {
-            weeks.append(first.createPreviousWeek())
-        }
-        weeks.append(currentWeek)
-        
-        if let last = currentWeek.last?.date {
-            weeks.append(last.createNextWeek())
-        }
-        return weeks
-    }
-    
-    func isSameDate(_ date1: Date, _ date2: Date) -> Bool {
-        Calendar.current.isDate(date1, inSameDayAs: date2)
     }
 }
     
-
 #Preview {
     HabitEntityView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
