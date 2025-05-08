@@ -9,20 +9,27 @@ import Foundation
 import SwiftUI
 import CoreData
 
+/*
+ Handles the logic to create new habit and saves it in CoreData. Keeps track of title and icon and validates before saving.
+ */
 class NewHabitViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var selectedSymbol : String = "photo"
     
     private let context: NSManagedObjectContext
     
+    //MARK: - initialization
     init(context: NSManagedObjectContext) {
         self.context = context
     }
     
+    //Determents if save button is activated
     var isSaveButtenDisabled: Bool {
         title.trimmingCharacters(in: .whitespaces).isEmpty
     }
     
+    //MARK: - methods
+    //Saves the new habit in CoreData
     func saveHabit() -> Bool {
         let newHabit = HabitEntity(context: context)
         newHabit.title = title
@@ -42,6 +49,7 @@ class NewHabitViewModel: ObservableObject {
         }
     }
     
+    //Resets the formularfields to origin values
     func resetFields() {
         title = ""
         selectedSymbol = "photo"

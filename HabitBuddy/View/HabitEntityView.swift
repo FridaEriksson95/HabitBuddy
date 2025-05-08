@@ -8,6 +8,10 @@
 import SwiftUI
 import CoreData
 
+/*
+ MainView for list of habits, weekslider and header. Fetches habits from CoreData and filter them based on date.
+ Empty view if no habits exists else habitItemView list for each habit. Weekview to navigate between days and a header to create new habits.
+ */
 struct HabitEntityView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel: HabitEntityViewModel
@@ -19,17 +23,21 @@ struct HabitEntityView: View {
         animation: .default)
     private var habits: FetchedResults<HabitEntity>
     
+    //MARK: - initialization
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
         _viewModel = StateObject(wrappedValue: HabitEntityViewModel(context: context))
     }
     
+    //MARK: - body/main view
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading) {
                 HeaderView()
                 
+                //Filter habits based on date
                 let filteredHabits = viewModel.filterHabits(for: viewModel.currentDate, habits: habits)
                 
+                //Empty view if no habits
                 if filteredHabits.isEmpty {
                     Spacer()
                     VStack(alignment: .center, spacing: 16) {
@@ -46,15 +54,18 @@ struct HabitEntityView: View {
                     .multilineTextAlignment(.center)
                     Spacer()
                 } else {
+                    
+                    //List of habits
                     List{
                         ForEach(viewModel.filterHabits(for: viewModel.currentDate, habits: habits)) { habit in
                             HabitItemView(
                                         habit : habit,
                                           isCompleted: viewModel.isHabitCompleted(habit, on: viewModel.currentDate),
-                                        isPastDate: { let createdDate = habit.createdDate ?? Calendar.current.startOfDay(for: Date())
-                                            let currentDate = Calendar.current.startOfDay(for: viewModel.currentDate)
-                                            let comparison = Calendar.current.compare(createdDate, to: currentDate, toGranularity: .day)
+                                        isPastDate: { let createdDate = habit.createdDate ?? viewModel.calendar.startOfDay(for: Date())
+                                            let currentDate = viewModel.calendar.startOfDay(for: viewModel.currentDate)
+                                            let comparison = viewModel.calendar.compare(createdDate, to: currentDate, toGranularity: .day)
                                             let result = comparison == .orderedAscending
+                                    
                                         return result}(),
                                         entityViewModel: viewModel
                             )
@@ -76,6 +87,8 @@ struct HabitEntityView: View {
         }
     }
     
+    //MARK: - headerview
+    //Header with logo, actual month and year, button to create new habit
     @ViewBuilder
     func HeaderView() -> some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -107,12 +120,15 @@ struct HabitEntityView: View {
             .font(.title.bold())
             .padding(.leading, 35)
             
+            //weekslider
             if viewModel.weekSlider.indices.contains(viewModel.currentWeekIndex) {
                 WeekView(viewModel.weekSlider[viewModel.currentWeekIndex])
             }
         }
     }
     
+    //MARK: - weekview
+    //Shows a row of days for specific week with option to navigate between weeks
     @ViewBuilder
     func WeekView(_ week: [Date.WeekDay]) -> some View {
         VStack{

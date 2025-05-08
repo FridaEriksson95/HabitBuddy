@@ -9,6 +9,10 @@ import Foundation
 import SwiftUI
 import CoreData
 
+/*
+ Handled the logic for specific habit, like defining done, update icon/title and handle streaks and notes.
+ Uses coreData to save changes in habit. Syncronise date with given calendar for correct timezone.
+ */
 class HabitViewModel: ObservableObject {
     @Published private var habit: HabitEntity
     @Published var isCompletedToday: Bool
@@ -18,42 +22,54 @@ class HabitViewModel: ObservableObject {
     @Published var didUpdateNotes = false
     
     private let context: NSManagedObjectContext
+    private let calendar: Calendar
     
-    init(habit: HabitEntity, context: NSManagedObjectContext) {
+    //MARK: - initialization
+    init(habit: HabitEntity, context: NSManagedObjectContext, calendar: Calendar) {
         self.habit = habit
         self.context = context
+        self.calendar = calendar
         self.isCompletedToday = habit.isCompletedToday
         self.streak = Int(habit.streak)
         self.title = habit.title ?? "din habit"
         self.symbolName = habit.symbolName ?? "questionmark.circle"
+        //Sets createddate for days date
         if habit.createdDate == nil {
-            habit.createdDate = Calendar.current.startOfDay(for: Date())
+            habit.createdDate = calendar.startOfDay(for: Date())
+            save()
+        } else if calendar.startOfDay(for: habit.createdDate!) < calendar.startOfDay(for: Date()) {
+            habit.createdDate = calendar.startOfDay(for: Date())
             save()
         }
         checkTodayStatus()
     }
     
+    //Count amount of days in actual week based on streak
     var daysThisWeek: Int {
         streak % 7
     }
     
+    //Count amount of full weeks based on streak
     var fullWeeks: Int {
         streak / 7
     }
     
+    //Counts progressvalue for weeks streak
     var progressValue: Double {
         Double(daysThisWeek) / 7.0
     }
     
+    //MARK: - methods
+    //Mark habit as done for specifik date
     func markAsCompleted(on date: Date) {
         guard !isHabitCompleted(on: date) else { return }
         
         var completedDates = habit.completedDates ?? []
-        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let normalizedDate = calendar.startOfDay(for: date)
         completedDates.append(normalizedDate)
         habit.completedDates = completedDates
         
-        if Calendar.current.isDateInToday(normalizedDate) {
+        if calendar.isDateInToday(normalizedDate) {
             isCompletedToday = true
             habit.isCompletedToday = true
             habit.lastCompletedDate = normalizedDate
@@ -64,12 +80,14 @@ class HabitViewModel: ObservableObject {
         save()
     }
     
+    //Controls if habit is marked done for specific date
     func isHabitCompleted(on date: Date) -> Bool {
         guard let completedDates = habit.completedDates else { return false }
-        let normalizedDate = Calendar.current.startOfDay(for: date)
-        return completedDates.contains { Calendar.current.isDate($0, inSameDayAs: normalizedDate) }
+        let normalizedDate = calendar.startOfDay(for: date)
+        return completedDates.contains { calendar.isDate($0, inSameDayAs: normalizedDate) }
     }
     
+    //Updates habits title and icon
     func updateHabit(newTitle: String, newSymbol: String) {
         habit.title = newTitle.isEmpty ? "din habit" : newTitle
         habit.symbolName = newSymbol
@@ -78,9 +96,10 @@ class HabitViewModel: ObservableObject {
         save()
     }
     
+    //Checks if habit is still done based on last marked date
     private func checkTodayStatus() {
         if let lastDate = habit.lastCompletedDate {
-            if !Calendar.current.isDateInToday(lastDate) {
+            if !calendar.isDateInToday(lastDate) {
                 isCompletedToday = false
                 habit.isCompletedToday = false
                 save()
@@ -88,6 +107,7 @@ class HabitViewModel: ObservableObject {
         }
     }
     
+    //Save to CoreData
     private func save() {
         do {
             try context.save()
@@ -96,9 +116,8 @@ class HabitViewModel: ObservableObject {
         }
     }
 
-
+//Fetches all completed dates for specific month
 func completedDatesInMonth(year: Int, month: Int) -> [Date] {
-    let calendar = Calendar.current
     guard let completedDates = habit.completedDates else { return [] }
     
     var components = DateComponents()
@@ -116,15 +135,18 @@ func completedDatesInMonth(year: Int, month: Int) -> [Date] {
         }
     }
     
+    //Handles the notes for habit with date and text
     private var notes: [Date: String] {
         get {
+            //Converts JSON-data to dictionary with date and notes
             if let notesData = habit.notes, let notesDict = try? JSONSerialization.jsonObject(with: notesData, options: []) as? [String: String] {
-                return Dictionary(uniqueKeysWithValues: notesDict.map { (Calendar.current.startOfDay(for: DateFormatter.iso8601.date(from: $0) ?? Date()), $1) })
+                return Dictionary(uniqueKeysWithValues: notesDict.map { (calendar.startOfDay(for: DateFormatter.iso8601.date(from: $0) ?? Date()), $1) })
             }
             return [:]
         }
         set {
-            let notesDict = Dictionary(uniqueKeysWithValues: newValue.map { (DateFormatter.iso8601.string(from: Calendar.current.startOfDay(for: $0)), $1) })
+            //Saves notes as JSON-data in CoreData
+            let notesDict = Dictionary(uniqueKeysWithValues: newValue.map { (DateFormatter.iso8601.string(from: calendar.startOfDay(for: $0)), $1) })
             do {
                 let notesData = try JSONSerialization.data(withJSONObject: notesDict, options: [])
                 habit.notes = notesData
@@ -136,19 +158,23 @@ func completedDatesInMonth(year: Int, month: Int) -> [Date] {
         }
     }
     
+    //Fetches note for specific date
     func getNote(for date: Date) -> String? {
-        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let normalizedDate = calendar.startOfDay(for: date)
         return notes[normalizedDate]
     }
     
+    //Adds or updates note for specific date
     func addNote(for date: Date, note: String) {
-        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let normalizedDate = calendar.startOfDay(for: date)
         var updatedNotes = notes
         updatedNotes[normalizedDate] = note.isEmpty ? nil : note
         notes = updatedNotes
     }
 }
 
+//MARK: - extension
+//A static formatter to convert dates to ISO 8601 format
 extension DateFormatter {
     static let iso8601: DateFormatter = {
         let formatter = DateFormatter()

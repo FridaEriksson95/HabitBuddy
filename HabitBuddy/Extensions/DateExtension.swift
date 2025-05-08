@@ -7,7 +7,13 @@
 
 import SwiftUI
 
+/*
+ Expands Date type with methods to format dates, control days date and generate weekdays. Easier to handle dates for app with weekview and formatting dates.
+ */
 extension Date {
+    
+//MARK: - methods
+    //Formats date to given string
     func format(_ format: String) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = format
@@ -15,12 +21,13 @@ extension Date {
         return formatter.string(from: self)
     }
     
+    //Checks if date is today based on actual calendar
     var isToday: Bool {
         return Calendar.current.isDateInToday(self)
     }
     
-    func fetchWeek() -> [WeekDay] {
-        let calendar = Calendar.current
+    //Catches an array of weekdays for the actual weeks where date is
+    func fetchWeek(using calendar: Calendar) -> [WeekDay] {
         let startOfDate = calendar.startOfDay(for: self)
         
         let weekInterval = calendar.dateInterval(of: .weekOfMonth, for: startOfDate)
@@ -37,18 +44,18 @@ extension Date {
         return week
     }
     
-    func createNextWeek() -> [WeekDay] {
-        let calendar = Calendar.current
+    //Creates an array of next weekdays
+    func createNextWeek(using calendar: Calendar) -> [WeekDay] {
         guard let nextWeekStart = calendar.date(byAdding: .weekOfYear, value: 1, to: self) else { return [] }
-        return nextWeekStart.fetchWeek()
+        return nextWeekStart.fetchWeek(using: calendar)
     }
-    
-    func createPreviousWeek() -> [WeekDay] {
-        let calendar = Calendar.current
+    //Creates an array of previous weekdays
+    func createPreviousWeek(using calendar: Calendar) -> [WeekDay] {
         guard let previousWeekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: self) else { return [] }
-        return previousWeekStart.fetchWeek()
+        return previousWeekStart.fetchWeek(using: calendar)
     }
     
+    //Represent a day in week with unic id and date
     struct WeekDay: Identifiable {
         var id: UUID = .init()
         var date: Date

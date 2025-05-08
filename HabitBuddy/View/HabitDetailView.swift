@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+//View that holds the details of days, weeks and notes when navigation in to specific habit
 struct HabitDetailView: View {
     @StateObject private var viewModel: HabitViewModel
     @State private var showingEditHabitView = false
@@ -15,6 +16,7 @@ struct HabitDetailView: View {
     @State private var selectedYear: Int
     @State private var selectedMonth: Int
     
+    //MARK: - initialization
     init(viewModel: HabitViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
         _selectedSymbol = State(initialValue: viewModel.symbolName)
@@ -25,6 +27,7 @@ struct HabitDetailView: View {
         _selectedMonth = State(initialValue: today.month ?? 5)
     }
     
+    //MARK: - body/view
     var body: some View {
         ZStack{
             ScrollView {
@@ -92,7 +95,7 @@ struct HabitDetailView: View {
                         .padding(.bottom, 10)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
- 
+                        
                         VStack{
                             Divider()
                             Spacer()
@@ -130,7 +133,7 @@ struct HabitDetailView: View {
                         }
                         .padding(.vertical, 30)
                         
-                            .vSpacing(.center)
+                        .vSpacing(.center)
                         Divider()
                         
                         HStack{
@@ -163,21 +166,9 @@ struct HabitDetailView: View {
             }
         }
     }
-        
-        private func monthName() -> String {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM"
-            var components = DateComponents()
-            components.year = selectedYear
-            components.month = selectedMonth
-            components.day = 1
-            if let date = Calendar.current.date(from: components) {
-                return dateFormatter.string(from: date)
-            }
-            return ""
-        }
-    }
+}
     
+//Set the view to edit specific habit with title and symbol
 struct EditHabitView: View {
         @Binding var selectedSymbol: String
         @Binding var editedTitle: String
@@ -237,16 +228,16 @@ struct EditHabitView: View {
         }
 
 
-#Preview {
-    let context = PersistenceController.preview.container.viewContext
-    let habit = HabitEntity(context: context)
-    habit.title = "Läsa bok"
-    habit.streak = 10
-    habit.symbolName = "book.fill"
-    habit.completedDates = [ Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 5))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 10))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
-    
-    return NavigationStack {
-        HabitDetailView(viewModel: HabitViewModel(habit: habit, context: context))
-            .environment(\.managedObjectContext, context)
-    }
-}
+//#Preview {
+//    let context = PersistenceController.preview.container.viewContext
+//    let habit = HabitEntity(context: context)
+//    habit.title = "Läsa bok"
+//    habit.streak = 10
+//    habit.symbolName = "book.fill"
+//    habit.completedDates = [ Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 5))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 10))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
+//    
+//    return NavigationStack {
+//        HabitDetailView(viewModel: HabitViewModel(habit: habit, context: context))
+//            .environment(\.managedObjectContext, context)
+//    }
+//}

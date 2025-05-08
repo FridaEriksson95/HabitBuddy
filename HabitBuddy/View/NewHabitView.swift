@@ -8,15 +8,20 @@
 import SwiftUI
 import CoreData
 
+/*
+ View to create new habit with title and icon. Uses NewHabitViewModel to handle logic. Shows a title textfield, list of icons and a save button.
+ */
 struct NewHabitView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: NewHabitViewModel
     
+    //MARK: - initialization
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
         _viewModel = StateObject(wrappedValue: NewHabitViewModel(context: context))
     }
     
+    //MARK: - body/view
     var body: some View {
             NavigationView {
                 Form {
@@ -66,6 +71,7 @@ struct NewHabitView: View {
     }
 }
 
+//The view to display the symbols
 struct HabitSymbolView: View {
     let symbol: HabitSymbol
     let isSelected: Bool

@@ -15,7 +15,8 @@ extension HabitEntity {
     @nonobjc public class func fetchRequest() -> NSFetchRequest<HabitEntity> {
         return NSFetchRequest<HabitEntity>(entityName: "HabitEntity")
     }
-
+    
+    //MARK: - properties for attributes
     @NSManaged public var lastCompletedDate: Date?
     @NSManaged public var isCompletedToday: Bool
     @NSManaged public var title: String?
@@ -27,5 +28,4 @@ extension HabitEntity {
 }
 
 extension HabitEntity : Identifiable {
-
 }

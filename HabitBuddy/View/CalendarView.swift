@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+/*
+ Shows a calendarview for given month marked with finished dates and notes. Takes in year, month, finished dates and HabitViewModel to fetch notes.
+ Generates a grid of days and shows a noteView when finished day picks.
+ */
 struct CalendarView: View {
     let year: Int
     let month: Int
@@ -19,9 +23,10 @@ struct CalendarView: View {
     
     @State private var selectedDate: Day?
     
+    //MARK: - body / view
     var body: some View {
         VStack {
-        Text(monthName())
+            Text(monthName())
                 .font(.headline)
                 .fontDesign(.monospaced)
                 .padding(.bottom, 15)
@@ -41,7 +46,7 @@ struct CalendarView: View {
             ForEach(0..<weeks, id: \.self) { week in
                 HStack {
                     ForEach(0..<daysInWeek, id: \.self) { dayIndex in
-                    let index = week * daysInWeek + dayIndex
+                        let index = week * daysInWeek + dayIndex
                         if index < days.count {
                             let day = days[index]
                             VStack{
@@ -59,6 +64,7 @@ struct CalendarView: View {
                                     }
                                     .buttonStyle(.plain)
                                     
+                                    //Shows icon for note or marker for done days
                                     if viewModel.getNote(for: day.date) != nil {
                                         Image(systemName: "note.text")
                                             .foregroundColor(.turquoise)
@@ -91,6 +97,8 @@ struct CalendarView: View {
         }
     }
     
+    //MARK: - methods
+    //Fetches name of month and year
     private func monthName() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM yyyy"
@@ -105,6 +113,7 @@ struct CalendarView: View {
         return ""
     }
     
+    //Represent a day in calendar with day, date and done
     private struct Day: Identifiable {
         let id = UUID()
         let day: Int
@@ -112,6 +121,7 @@ struct CalendarView: View {
         let isCompleted: Bool
     }
     
+    //Generate an array of days for actual month including empty spaces
     private func generateDays() -> [Day] {
         var components = DateComponents()
         components.year = year
@@ -149,6 +159,7 @@ struct CalendarView: View {
     }
 }
 
+//Notes for specific day, allows editing and saving
 struct NoteView: View {
     let date: Date
     @ObservedObject var viewModel: HabitViewModel
@@ -158,6 +169,7 @@ struct NoteView: View {
     
     private let calendar = Calendar.current
     
+    //MARK: - initialization
     init(date: Date, viewModel: HabitViewModel) {
         self.date = date
         self.viewModel = viewModel
@@ -166,7 +178,7 @@ struct NoteView: View {
         self._isEditing = State(initialValue: false)
     }
     
-    
+    //MARK: - body / view
     var body: some View {
         NavigationView {
             VStack {
@@ -250,6 +262,7 @@ struct NoteView: View {
         }
     }
     
+    //Formats date to readable string
     private func dateFormatted() -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium

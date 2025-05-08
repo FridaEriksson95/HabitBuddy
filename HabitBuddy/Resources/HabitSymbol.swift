@@ -7,6 +7,9 @@
 
 import Foundation
 
+/*
+ Staces the different symbols and names for each
+ */
 struct HabitSymbol : Identifiable, Hashable {
     let id = UUID()
     let systemName: String
