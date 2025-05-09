@@ -19,7 +19,6 @@ class HabitViewModel: ObservableObject {
     @Published var streak: Int
     @Published var title: String
     @Published var symbolName: String
-    @Published var didUpdateNotes = false
     
     private let context: NSManagedObjectContext
     private let calendar: Calendar
@@ -112,7 +111,7 @@ class HabitViewModel: ObservableObject {
         do {
             try context.save()
         } catch {
-            print("Fel vid sparning: \(error.localizedDescription)")
+            print("Error saving: \(error.localizedDescription)")
         }
     }
 
@@ -140,18 +139,17 @@ func completedDatesInMonth(year: Int, month: Int) -> [Date] {
         get {
             //Converts JSON-data to dictionary with date and notes
             if let notesData = habit.notes, let notesDict = try? JSONSerialization.jsonObject(with: notesData, options: []) as? [String: String] {
-                return Dictionary(uniqueKeysWithValues: notesDict.map { (calendar.startOfDay(for: DateFormatter.iso8601.date(from: $0) ?? Date()), $1) })
+                return Dictionary(uniqueKeysWithValues: notesDict.map { (calendar.startOfDay(for: Date.fromISO8601String($0, using: calendar) ?? Date()), $1) })
             }
             return [:]
         }
         set {
             //Saves notes as JSON-data in CoreData
-            let notesDict = Dictionary(uniqueKeysWithValues: newValue.map { (DateFormatter.iso8601.string(from: calendar.startOfDay(for: $0)), $1) })
+            let notesDict = Dictionary(uniqueKeysWithValues: newValue.map { (calendar.startOfDay(for: $0).toISO8601String(using: calendar), $1) })
             do {
                 let notesData = try JSONSerialization.data(withJSONObject: notesDict, options: [])
                 habit.notes = notesData
                 save()
-                didUpdateNotes.toggle()
             } catch {
                 print("Failed to encode notes: \(error.localizedDescription)")
             }
@@ -173,14 +171,3 @@ func completedDatesInMonth(year: Int, month: Int) -> [Date] {
     }
 }
 
-//MARK: - extension
-//A static formatter to convert dates to ISO 8601 format
-extension DateFormatter {
-    static let iso8601: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.calendar = Calendar.current
-        formatter.timeZone = TimeZone.current
-        return formatter
-    }()
-}

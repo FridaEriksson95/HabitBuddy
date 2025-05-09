@@ -17,10 +17,12 @@ class NewHabitViewModel: ObservableObject {
     @Published var selectedSymbol : String = "photo"
     
     private let context: NSManagedObjectContext
+    private let calendar: Calendar
     
     //MARK: - initialization
-    init(context: NSManagedObjectContext) {
+    init(context: NSManagedObjectContext, calendar: Calendar) {
         self.context = context
+        self.calendar = calendar
     }
     
     //Determents if save button is activated
@@ -37,14 +39,17 @@ class NewHabitViewModel: ObservableObject {
         newHabit.isCompletedToday = false
         newHabit.lastCompletedDate = nil
         newHabit.symbolName = selectedSymbol
-        newHabit.createdDate = Calendar.current.startOfDay(for: Date())
+        
+        let now = Date()
+        let normalizedDate = calendar.startOfDay(for: now)
+        newHabit.createdDate = normalizedDate
         newHabit.completedDates = []
         
         do{
             try context.save()
             return true
         }catch {
-            print("Fel vid sparning av habit: \(error.localizedDescription)")
+            print("error saving habit: \(error.localizedDescription)")
             return false
         }
     }
@@ -55,4 +60,3 @@ class NewHabitViewModel: ObservableObject {
         selectedSymbol = "photo"
     }
 }
-

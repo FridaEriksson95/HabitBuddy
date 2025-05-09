@@ -17,11 +17,20 @@ struct CalendarView: View {
     let completedDates: [Date]
     @ObservedObject var viewModel: HabitViewModel
     @Environment(\.dismiss) var dismiss
-    private let calendar = Calendar.current
+    private let calendar: Calendar
     private let daysInWeek = 7
     private let dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     
     @State private var selectedDate: Day?
+    
+    //MARK: - initialization
+    init(year: Int, month: Int, completedDates: [Date], viewModel: HabitViewModel, calendar: Calendar) {
+        self.year = year
+        self.month = month
+        self.completedDates = completedDates
+        self.viewModel = viewModel
+        self.calendar = calendar
+    }
     
     //MARK: - body / view
     var body: some View {
@@ -90,25 +99,20 @@ struct CalendarView: View {
             }
         }
         .padding()
-        .onChange(of: viewModel.didUpdateNotes) {
-        }
         .sheet(item: $selectedDate) { day in
-            NoteView(date: day.date, viewModel: viewModel)
+            NoteView(date: day.date, viewModel: viewModel, calendar: calendar)
         }
     }
     
     //MARK: - methods
     //Fetches name of month and year
     private func monthName() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM yyyy"
-        dateFormatter.timeZone = TimeZone.current
         var components = DateComponents()
         components.year = year
         components.month = month
         components.day = 1
         if let date = calendar.date(from: components) {
-            return dateFormatter.string(from: date)
+            return date.format("MMMM yyyy", using: calendar)
         }
         return ""
     }
@@ -147,7 +151,6 @@ struct CalendarView: View {
             components.day = day
             if let date = calendar.date(from: components) {
                 let normalizedDate = calendar.startOfDay(for: date)
-                print("Generated day \(day) with date: \(normalizedDate)")
                 
                 let isCompleted = completedDates.contains { completedDate in
                     calendar.isDate(completedDate, inSameDayAs: normalizedDate)
@@ -167,12 +170,13 @@ struct NoteView: View {
     @State private var isEditing: Bool
     @Environment(\.dismiss) var dismiss
     
-    private let calendar = Calendar.current
+    private let calendar: Calendar
     
     //MARK: - initialization
-    init(date: Date, viewModel: HabitViewModel) {
+    init(date: Date, viewModel: HabitViewModel, calendar: Calendar) {
         self.date = date
         self.viewModel = viewModel
+        self.calendar = calendar
         let normalizedDate = calendar.startOfDay(for: date)
         self._noteText = State(initialValue: viewModel.getNote(for: normalizedDate) ?? "")
         self._isEditing = State(initialValue: false)
@@ -204,8 +208,6 @@ struct NoteView: View {
                         Button(action: {
                             let normalizedDate = calendar.startOfDay(for: date)
                             viewModel.addNote(for: normalizedDate, note: noteText)
-                            print("Saving note for date: \(calendar.startOfDay(for: date)) with text: \(noteText)")
-                            
                             isEditing = false
                             dismiss()
                         }) {
@@ -223,7 +225,7 @@ struct NoteView: View {
                         Button(action: {
                             isEditing = true
                         }) {
-                            Text("Redigera")
+                            Text(isEditing ? "Redigera" : "Lägg till")
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                                 .padding()
@@ -262,12 +264,11 @@ struct NoteView: View {
         }
     }
     
+    //MARK: - methods
+    
     //Formats date to readable string
     private func dateFormatted() -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeZone = TimeZone.current
-        return formatter.string(from: date)
+        return date.format("d MMMM yyyy", using: calendar)
     }
 }
 
@@ -276,6 +277,13 @@ struct NoteView: View {
 //    let habit = HabitEntity(context: context)
 //    habit.title = "Matlagning"
 //    habit.symbolName = "leaf.fill"
-//    habit.completedDates = [ Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 5))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 10))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
-//    let viewModel = HabitViewModel(habit: habit, context: context)
-//    return CalendarView(year: 2025, month: 5, completedDates: viewModel.completedDatesInMonth(year: 2025, month: 5), viewModel: viewModel) }
+//    let calendar = {
+//        var cal = Calendar.current
+//        cal.timeZone = TimeZone.current
+//        return cal
+//    }()
+//    habit.completedDates = [ calendar.date(from: DateComponents(year: 2025, month: 5, day: 5))!, calendar.date(from: DateComponents(year: 2025, month: 5, day: 10))!, calendar.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
+//    let viewModel = HabitViewModel(habit: habit, context: context, calendar: calendar)
+//    
+//    CalendarView(year: 2025, month: 5, completedDates: viewModel.completedDatesInMonth(year: 2025, month: 5), viewModel: viewModel, calendar: calendar)
+//}

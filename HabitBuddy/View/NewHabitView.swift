@@ -18,7 +18,12 @@ struct NewHabitView: View {
     
     //MARK: - initialization
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
-        _viewModel = StateObject(wrappedValue: NewHabitViewModel(context: context))
+        let calendar = {
+            var cal = Calendar.current
+            cal.timeZone = TimeZone.current
+            return cal
+        }()
+        _viewModel = StateObject(wrappedValue: NewHabitViewModel(context: context, calendar: calendar))
     }
     
     //MARK: - body/view
@@ -71,7 +76,7 @@ struct NewHabitView: View {
     }
 }
 
-//The view to display the symbols
+//The view to display the symbols from HabitSymbol
 struct HabitSymbolView: View {
     let symbol: HabitSymbol
     let isSelected: Bool
