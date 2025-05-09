@@ -14,9 +14,11 @@ extension Date {
     
 //MARK: - methods
     //Formats date to given string
-    func format(_ format: String) -> String {
+    func format(_ format: String, using calendar: Calendar) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = format
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
         
         return formatter.string(from: self)
     }
@@ -55,9 +57,25 @@ extension Date {
         return previousWeekStart.fetchWeek(using: calendar)
     }
     
+    func toISO8601String(using calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        return formatter.string(from: self)
+    }
+    
+    static func fromISO8601String(_ string: String, using calendar: Calendar) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        return formatter.date(from: string)
+    }
+    
     //Represent a day in week with unic id and date
-    struct WeekDay: Identifiable {
-        var id: UUID = .init()
+    struct WeekDay: Identifiable, Equatable {
+        var id: Date { date }
         var date: Date
     }
 }

@@ -32,12 +32,7 @@ class HabitEntityViewModel: ObservableObject {
         calendar.timeZone = TimeZone.current
         self.calendar = calendar
         
-        //Formatter to log dates in local time
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .medium
-        formatter.timeZone = calendar.timeZone
-        
+      
         // Sets currentdate to todays date by midnight
         let now = Date()
         self.currentDate = calendar.startOfDay(for: now)
@@ -45,6 +40,7 @@ class HabitEntityViewModel: ObservableObject {
         // Generates weekslider and updates
         self.weekSlider = HabitEntityViewModel.generateInitialWeeks(using: calendar)
         updateWeekSlider(for: self.currentDate)
+
     }
     
     //MARK: - methods
@@ -162,10 +158,11 @@ class HabitEntityViewModel: ObservableObject {
         return habits.filter { habit in
             if let createdDate = habit.createdDate {
                 let normalizedCreatedDate = calendar.startOfDay(for: createdDate)
+                return calendar.compare(normalizedCreatedDate, to: normalizedDate, toGranularity: .day) != .orderedDescending
                 
-                return normalizedCreatedDate <= normalizedDate
             }
-            return true
+        
+            return false
         }
     }
     

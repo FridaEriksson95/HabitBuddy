@@ -38,7 +38,7 @@ struct HabitEntityView: View {
                 let filteredHabits = viewModel.filterHabits(for: viewModel.currentDate, habits: habits)
                 
                 //Empty view if no habits
-                if filteredHabits.isEmpty {
+                if habits.isEmpty {
                     Spacer()
                     VStack(alignment: .center, spacing: 16) {
                         Text("Inga habits än")
@@ -57,11 +57,12 @@ struct HabitEntityView: View {
                     
                     //List of habits
                     List{
-                        ForEach(viewModel.filterHabits(for: viewModel.currentDate, habits: habits)) { habit in
+                        ForEach(filteredHabits) { habit in
                             HabitItemView(
                                         habit : habit,
                                           isCompleted: viewModel.isHabitCompleted(habit, on: viewModel.currentDate),
-                                        isPastDate: { let createdDate = habit.createdDate ?? viewModel.calendar.startOfDay(for: Date())
+                                        isPastDate: {
+                                            let createdDate = habit.createdDate ?? viewModel.calendar.startOfDay(for: Date())
                                             let currentDate = viewModel.calendar.startOfDay(for: viewModel.currentDate)
                                             let comparison = viewModel.calendar.compare(createdDate, to: currentDate, toGranularity: .day)
                                             let result = comparison == .orderedAscending
@@ -97,11 +98,11 @@ struct HabitEntityView: View {
                     .resizable()
                     .frame(width: 60, height: 60)
                     .clipShape(.circle)
-                Text(viewModel.currentDate.format("MMMM"))
+                Text(viewModel.currentDate.format("MMMM", using: viewModel.calendar))
                     .foregroundStyle(.bluegreen)
                     .padding(.trailing, 5)
                 
-                Text(viewModel.currentDate.format("YYYY"))
+                Text(viewModel.currentDate.format("YYYY", using: viewModel.calendar))
                     .foregroundStyle(.gray)
                 
                 Button(action: {
@@ -148,11 +149,11 @@ struct HabitEntityView: View {
                 
                 ForEach(week) { day in
                     VStack(spacing: 6) {
-                        Text(day.date.format("E"))
+                        Text(day.date.format("E", using: viewModel.calendar))
                             .font(.caption)
                             .foregroundStyle(.gray)
                         
-                        Text(day.date.format("dd"))
+                        Text(day.date.format("dd", using: viewModel.calendar))
                             .font(.headline)
                             .foregroundStyle(viewModel.isSameDate(day.date, viewModel.currentDate) ? .white : .gray)
                             .frame(width: 35, height: 35)

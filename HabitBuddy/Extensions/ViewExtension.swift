@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+/*
+ Try with extension to not repeat to many codeblocks with views, but didn't manage to get them correct so it looked like I wanted in design. 
+ */
 extension View {
     @ViewBuilder
     func hSpacing(_ alignment: Alignment) -> some View {

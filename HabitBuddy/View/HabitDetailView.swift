@@ -15,13 +15,19 @@ struct HabitDetailView: View {
     @State private var editedTitle: String
     @State private var selectedYear: Int
     @State private var selectedMonth: Int
+    private let calendar: Calendar
     
     //MARK: - initialization
-    init(viewModel: HabitViewModel) {
+    init(viewModel: HabitViewModel, calendar: Calendar = {
+        var cal = Calendar.current
+        cal.timeZone = TimeZone.current
+        return cal
+    }()) {
+        self.calendar = calendar
         _viewModel = StateObject(wrappedValue: viewModel)
         _selectedSymbol = State(initialValue: viewModel.symbolName)
         _editedTitle = State(initialValue: viewModel.title)
-        let today = Calendar.current.dateComponents([.year, .month], from: Date())
+        let today = calendar.dateComponents([.year, .month], from: Date())
         
         _selectedYear = State(initialValue: today.year ?? 2025)
         _selectedMonth = State(initialValue: today.month ?? 5)
@@ -129,7 +135,8 @@ struct HabitDetailView: View {
                             .padding(.horizontal)
                             
                             CalendarView(
-                                year: selectedYear, month: selectedMonth, completedDates: viewModel.completedDatesInMonth(year: selectedYear, month: selectedMonth), viewModel: viewModel)
+                                year: selectedYear, month: selectedMonth, completedDates: viewModel.completedDatesInMonth(year: selectedYear, month: selectedMonth), viewModel: viewModel,
+                                    calendar: calendar)
                         }
                         .padding(.vertical, 30)
                         
@@ -234,10 +241,21 @@ struct EditHabitView: View {
 //    habit.title = "Läsa bok"
 //    habit.streak = 10
 //    habit.symbolName = "book.fill"
-//    habit.completedDates = [ Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 5))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 10))!, Calendar.current.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
+//    let calendar = {
+//          var cal = Calendar.current
+//          cal.timeZone = TimeZone.current
+//          return cal
+//      }()
 //    
-//    return NavigationStack {
-//        HabitDetailView(viewModel: HabitViewModel(habit: habit, context: context))
+//    habit.completedDates = [
+//        calendar.date(from: DateComponents(year: 2025, month: 5, day: 5))!,
+//        calendar.date(from: DateComponents(year: 2025, month: 5, day: 10))!,
+//        calendar.date(from: DateComponents(year: 2025, month: 5, day: 15))! ]
+//    
+//    let viewModel = HabitViewModel(habit: habit, context: context, calendar: calendar)
+//    
+//    NavigationStack {
+//        HabitDetailView(viewModel: viewModel, calendar: calendar)
 //            .environment(\.managedObjectContext, context)
 //    }
 //}
